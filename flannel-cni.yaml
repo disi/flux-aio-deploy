@@ -1,0 +1,30 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: flannel
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://flannel-io.github.io/flannel/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1 # always helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease # always HelmRelease
+metadata:
+  name: flannel # name in kubernetes
+  namespace: flux-system # namespace in kubernetes
+spec:
+  releaseName: flannel # best use upstream chart name
+  targetNamespace: kube-system
+  storageNamespace: kube-system
+  interval: 30m # check for updates
+#  install:
+#    remediation:
+#      retries: -1 # always try to fix
+  chart:
+    spec:
+      chart: flannel  # Must be the same as the upstream chart name
+      version: '*' # use latest version
+      interval: 12h
+      sourceRef:
+        kind: HelmRepository # <HelmRepository|GitRepository|Bucket>
+        name: flannel # References the HelmRepository usually upstream chart name
