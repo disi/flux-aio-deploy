@@ -1,0 +1,132 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# remember to check the tls, hostnames for each app!
+
+# disable random secret suffixes
+generatorOptions:
+  disableNameSuffixHash: true
+
+# generate tls secret for each workspace
+# needs to be filename tls.crt and tls.key in the same folder
+secretGenerator:
+  # weaver
+  - name: weaver-host-secret-tls
+    namespace: apps-system
+    type: kubernetes.io/tls
+    files:
+      - tls/tls.crt
+      - tls/tls.key
+  # kubeClarity
+  - name: kubec-host-secret-tls
+    namespace: apps-system
+    type: kubernetes.io/tls
+    files:
+      - tls/tls.crt
+      - tls/tls.key
+  # kubernetes-dashboard
+  - name: k8s-host-secret-tls
+    namespace: apps-system
+    type: kubernetes.io/tls
+    files:
+      - tls/tls.crt
+      - tls/tls.key
+
+# patch configurations for weave-gitops
+patches:
+- target:
+    kind: Ingress
+    name: weave-gitops-ingress
+    namespace: apps-system
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: weave.home
+- target:
+    kind: HelmRelease
+    name: weave-gitops
+    namespace: apps-system
+  patch: |-
+    - op: replace
+      path: /spec/values/adminUser/passwordHash
+      value: admin
+  # default 'flux', can be generated: echo -n "<your password>" | gitops get bcrypt-hash
+  # this can only be set at deployment of the cluster
+  patch: |-
+    - op: replace
+      path: /spec/values/adminUser/username
+      value: "$2a$10$P/tHQ1DNFXdvX0zRGA8LPeSOyb0JXq9rP3fZ4W8HGTpLV7qHDlWhe"
+      
+# # patch configurations for kubeclarity
+patches:
+- target:
+    kind: Ingress
+    name: kubeclarity-ingress
+    namespace: apps-system
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: kubeclarity.home
+# patch the psql DB settings for kubeclarity
+- target:
+    kind: HelmRelease
+    name: kubeclarity
+    namespace: apps-system
+  # DB username
+  patch: |-
+    - op: replace
+      path: /spec/values/kubeclarity-postgresql-external/auth/username
+      value: kubeclarity
+  # DB passowrd
+  patch: |-
+    - op: replace
+      path: /spec/values/kubeclarity-postgresql-secret/secretKey
+      value: kubeclarity
+  # create a psql pod for kubeclarity
+  patch: |-
+    - op: replace
+      path: /spec/values/kubeclarity-postgresql/enabled
+      value: false
+  # settings for existing psql DB
+  patch: |-
+    - op: replace
+      path: /spec/values/kubeclarity-postgresql-external/enabled
+      value: true
+  patch: |-
+    - op: replace
+      path: /spec/values/kubeclarity-postgresql-external/auth/host
+      value: vmalmapsql.home
+  patch: |-
+    - op: replace
+      path: /spec/values/kubeclarity-postgresql-external/auth/port
+      value: 5432
+  patch: |-
+    - op: replace
+      path: /spec/values/kubeclarity-postgresql-external/auth/database
+      value: kubeclarity
+  patch: |-
+    - op: replace
+      path: /spec/values/kubeclarity-postgresql-external/auth/sslMode
+      value: disable
+  patch: |-
+    - op: replace
+      path: /spec/values/kubeclarity-postgresql-secret/create
+      value: true
+
+# patch configurations for kubernetes-dashboard
+patches:
+- target:
+    kind: Ingress
+    name: kubernetes-dashboard-ingress
+    namespace: apps-system
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: k8s.home
+  # to get the admin service user token
+  # kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath={".data.token"} | base64 -d
+
+resources:
+  - weave-gitops.yaml
+  - kubernetes-dashboard.yaml
+  - kubeclarity.yaml

@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# patch the hostname for kubernetes
+patches:
+- target:
+    kind: Ingress
+    name: kubernetes-ingress
+    namespace: infra-system
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: kubernetes.home
+
+resources:
+  - nginx-controller-config.yaml

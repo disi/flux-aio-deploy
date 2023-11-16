@@ -1,0 +1,58 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# remember to check the hostname in the ingress for the app!
+
+# disable random secret suffixes
+generatorOptions:
+  disableNameSuffixHash: true
+
+# needs to be filename tls.crt and tls.key in the same folder
+secretGenerator:
+  - name: awx-secret-tls
+    namespace: awx-system
+    type: kubernetes.io/tls
+    files:
+      - tls/tls.crt
+      - tls/tls.key
+  # psql DB config
+  - name: awx-postgres-configuration
+    type: Opaque
+    literals:
+      - host=vmalmapsql.home
+      - port=5432
+      - database=awx
+      - username=awx
+      - password=awx
+      - sslmode=prefer
+      - type=unmanaged
+  # the admin password
+  - name: awx-admin-password
+    type: Opaque
+    literals:
+      - password=awxawx
+  # If you want to specify SECRET_KEY for your AWX manually, uncomment following lines and change the value.
+  # Refer AAC documentation for detail about SECRET_KEY.
+  # https://docs.ansible.com/automation-controller/latest/html/administration/secret_handling.html
+  # this is a good thing to do, if you ever need to migrate the database
+  - name: awx-secret-key
+    type: Opaque
+    literals:
+      - secret_key=awxawx
+
+# patch the hostname for AWX
+patches:
+- target:
+    kind: Ingress
+    name: awx-ingress
+    namespace: awx-system
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: awx.home
+
+resources:
+  - pv.yaml
+  - pvc.yaml
+  - awx.yaml
+  - ingress.yaml

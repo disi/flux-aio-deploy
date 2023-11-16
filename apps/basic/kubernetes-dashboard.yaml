@@ -1,0 +1,84 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: kubernetes-dashboard
+  namespace: apps-system
+spec:
+  interval: 24h
+  url: https://kubernetes.github.io/dashboard/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kubernetes-dashboard
+  namespace: apps-system
+spec:
+  interval: 30m
+  timeout: 5m # timeout for kubernetes operations (default 5m)
+  install:
+    remediation:
+      retries: -1 # always try to fix
+  chart:
+    spec:
+      chart: kubernetes-dashboard
+      version: "*" # use latest stable version
+      sourceRef:
+        kind: HelmRepository
+        name: kubernetes-dashboard
+        namespace: apps-system
+      interval: 12h
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubernetes-dashboard-ingress
+  namespace: apps-system
+  annotations:
+    nginx.ingress.kubernetes.io/websocket-services: "wss"
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    secretName: k8s-host-secret-tls
+  rules:
+  - host: k8s.home
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: kubernetes-dashboard
+              port:
+                number: 443
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: apps-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: apps-system
+# kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath={".data.token"} | base64 -d
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-user
+  namespace: apps-system
+  annotations:
+    kubernetes.io/service-account.name: "admin-user"   
+type: kubernetes.io/service-account-token

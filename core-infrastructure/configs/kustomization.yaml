@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# this is the range for metallb to assign IPs to ingress controllers
+# the ip range should be reachable from your network, but outside any DHCP scopes
+# changes only apply if the cluster is rebooted or new deployed
+# patch the ip range for metallb
+patches:
+- target:
+    kind: IPAddressPool
+    name: default
+    namespace: core-system
+  patch: |-
+    - op: replace
+      path: /spec/addresses
+      value:
+        - 10.0.2.100-10.0.2.105
+
+resources:
+  - metallb-controller-config.yaml

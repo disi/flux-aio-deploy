@@ -1,0 +1,52 @@
+# create the postgres configuration here to prevent awx-operator from spawning a postgres pod
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: awx-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: awx-postgres-configuration
+  namespace: awx-system
+stringData:
+  host: vmalmapsql.home
+  port: '5432'
+  database: awx
+  username: awx
+  password: awx
+  sslmode: prefer
+  type: unmanaged
+type: Opaque
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: awx-operator
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://ansible.github.io/awx-operator/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1 # always helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease # always HelmRelease
+metadata:
+  name: awx-operator # name in kubernetes
+  namespace: awx-system # namespace in kubernetes
+spec:
+  interval: 30m # check for updates
+  timeout: 5m # timeout for kubernetes operations (default 5m)
+  install:
+    remediation:
+      retries: -1 # always try to fix
+  releaseName: awx-operator # best use upstream chart name
+  chart:
+    spec:
+      chart: awx-operator  # Must be the same as the upstream chart name
+      version: '*' # use latest version
+      interval: 12h
+      sourceRef:
+        kind: HelmRepository # <HelmRepository|GitRepository|Bucket>
+        name: awx-operator # References the HelmRepository usually upstream chart name
+        namespace: awx-system

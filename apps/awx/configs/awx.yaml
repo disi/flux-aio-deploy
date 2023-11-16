@@ -1,0 +1,23 @@
+---
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx
+  namespace: awx-system
+spec:
+  admin_user: admin
+  admin_password_secret: awx-admin-password
+#  hostname: awx.home
+  ingress_type: none
+#  ingress_tls_secret: awx-secret-tls
+  postgres_configuration_secret: awx-postgres-configuration
+  projects_persistence: true
+  projects_existing_claim: awx-projects-claim
+  web_replicas: 1
+  task_replicas: 1
+  web_resource_requirements: {}
+  task_resource_requirements: {}
+  ee_resource_requirements: {}
+  init_container_resource_requirements: {}
+  # Uncomment to reveal "censored" logs
+  #no_log: false

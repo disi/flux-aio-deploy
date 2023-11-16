@@ -1,0 +1,31 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: metallb
+  namespace: core-system
+spec:
+  interval: 24h
+  url: https://metallb.github.io/metallb/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1 # always helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease # always HelmRelease
+metadata:
+  name: metallb # name in kubernetes
+  namespace: core-system # namespace in kubernetes
+spec:
+  interval: 30m # check for updates
+  timeout: 5m # timeout for kubernetes operations (default 5m)
+  install:
+    remediation:
+      retries: -1 # always try to fix
+  releaseName: metallb # best use upstream chart name
+  chart:
+    spec:
+      chart: metallb  # Must be the same as the upstream chart name
+      version: '*' # use latest version
+      interval: 12h
+      sourceRef:
+        kind: HelmRepository # <HelmRepository|GitRepository|Bucket>
+        name: metallb # References the HelmRepository usually upstream chart name
+        namespace: core-system
