@@ -17,7 +17,7 @@ All configuration of the Helm releases for containers should be made in the Git 
 ### Requirements
 - Kubernetes cluster with internet access.
 - Access to the master node of the Kubernetes cluster.
-- Clone of this Git Repository and a user with contribution access.
+- A copy of this Git Repository.
 - PSQL DB is recommended.
 ## Install
 ### Considerations
