@@ -100,7 +100,7 @@ postgres# \q
 postgres$ exit
 ```
 ### 3. AWX and cluster deployment on the master node
-#### Prepare the project cache folder (AWX projects should be hosted on an external Git repostiory).
+#### \[Optional\] Prepare the project cache folder (AWX projects should be hosted on an external Git repostiory).
 ```
 $ sudo mkdir -p /data/projects
 $ sudo chown 1000:0 /data/projects
