@@ -110,7 +110,7 @@ You will need to update the file flux-aio.cue with the URL to your GIT repositor
 Download the timoni binary from https://github.com/stefanprodan/timoni/releases
 ```
 $ wget -qO- https://github.com/stefanprodan/timoni/releases/download/v0.16.0/timoni_0.16.0_linux_amd64.tar.gz | tar xvz
-$ sudo mv timoni /usr/locl/bin/
+$ sudo mv timoni /usr/local/bin/
 # /usr/local/bin/timoni completion bash > /etc/bash_completion.d/timoni
 $ sudo ln -s /usr/local/bin/timoni /usr/bin/timoni
 ```
