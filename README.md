@@ -164,6 +164,8 @@ Get the latest releases for k9s_Linux_amd64.tar.gz here: https://github.com/dera
 ```
 $ wget -qO- https://github.com/derailed/k9s/releases/download/v0.28.2/k9s_Linux_amd64.tar.gz | tar xvz
 $ sudo mv k9s /usr/local/bin/
+$ source <(k9s completion bash)
+# /usr/local/bin/k9s completion bash > /etc/bash_completion.d/k9s
 $ sudo ln -s /usr/local/bin/k9s /usr/bin/k9s
 ```
 ### Useful Flux CLI commands
