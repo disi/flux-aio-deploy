@@ -17,4 +17,5 @@ patches:
       value: "*"
 
 resources:
+  - awx-ns.yaml
   - awx-operator.yaml

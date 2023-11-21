@@ -1,11 +1,6 @@
 # create the postgres configuration here to prevent awx-operator from spawning a postgres pod
 ---
 apiVersion: v1
-kind: Namespace
-metadata:
-  name: awx-system
----
-apiVersion: v1
 kind: Secret
 metadata:
   name: awx-postgres-configuration

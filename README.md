@@ -6,13 +6,13 @@ Flux is a CI/CD service, which works with Helm charts to deploy containers on Ku
 All configuration of the Helm releases for containers should be made in the Git repository, Flux checks the current cluster state about every minute.
 ### Services involved
 - AWX is an Ansbile Automation Platform.
-- KubeClarity is a dashboard to Kubernetes to show/scan vulnerabilties within the cluster.
 - Kubernetes-Dashboard is a dashboard to Kubernetes.
 - Weave-GitOps is a dashboard to Flux.
 - Flux is a CI/CD system to apply the state of the cluster and upgrade container images.
-- Timoni is a kubernetes deployment tool.
+- Metrics-Server monitors the health of the cluster and resources.
 - NGINX Ingress Controller is a service to expose containers to the network.
 - MetalLB is a load balancer to assign IPs to Ingress Controllers.
+- Timoni is a kubernetes deployment tool.
 - Kubernetes is a platform to run containerized images.
 ### Requirements
 - Kubernetes cluster with internet access.
@@ -30,7 +30,7 @@ All configuration of the Helm releases for containers should be made in the Git 
 #### Layout of the repostiory
 The comments mark the files where changes should be made.
 ```
-HOMEAIO
+HOMEAIO/
 ├── README.md
 ├── apps
 │   ├── awx
@@ -44,10 +44,11 @@ HOMEAIO
 │   │   │       ├── tls.crt
 │   │   │       └── tls.key
 │   │   └── systems
+│   │       ├── awx-ns.yaml
 │   │       ├── awx-operator.yaml
 │   │       └── kustomization.yaml
 │   └── basic
-│       ├── kubeclarity.yaml
+│       ├── apps-system-ns.yaml
 │       ├── kubernetes-dashboard.yaml
 │       ├── kustomization.yaml # change the values for the dashboards
 │       ├── tls # change the tls certs for the dashboards
@@ -59,32 +60,31 @@ HOMEAIO
 │   │   ├── kustomization.yaml # change the metallb IP range
 │   │   └── metallb-controller-config.yaml
 │   └── systems
+│       ├── core-system-ns.yaml
 │       ├── flannel-cni.yaml
 │       ├── kustomization.yaml
 │       └── metallb-controller.yaml
 ├── flux-aio.cue # timoni deployment bundle - change Flux version and GIT URLs
 └── infrastructure
     ├── configs
-    │   ├── kustomization.yaml # change the kubernetes dashboard hostname
-    │   └── nginx-controller-config.yaml
+    │   └── kustomization.yaml
     └── systems
+        ├── infra-system-ns.yaml
         ├── kustomization.yaml
+        ├── metrics-server.yaml
         └── nginx-controller.yaml
 ```
 #### Flow of the deployment
 - First timoni will deploy the kustomization in this order: core-infrastructure -> infrastructure -> apps/basic -> apps/awx
 - Afterwards the AWX Operator will deploy AWX.
-### 2. Prepare the databases and users on the Postgres instance
-- PostGreSQL DBs required/recommended for AWX and kubeClarity
+### 2. Prepare the database and user on the Postgres instance
+- PostGreSQL DBs required/recommended for AWX
 ```
 $ sudo -i -u postgres
 postgres$ createdb awx
-postgres$ createdb kubeclarity
 postgres$ createuser --createdb awx
-postgres$ createuser --createdb kubeclarity
 postgres$ psql
 postgres# grant all privileges on database awx to awx;
-postgres# grant all privileges on database kubeclarity to kubeclarity;
 postgres# \q
 postgres$ exit
 ```
@@ -94,8 +94,6 @@ $ sudo -i -u postgres
 postgres$ psql
 postgres# ALTER ROLE awx
 postgres# WITH PASSWORD 'awxawx';
-postgres# ALTER ROLE kubeclarity
-postgres# WITH PASSWORD 'kubeclarity';
 postgres# \q
 postgres$ exit
 ```
@@ -107,7 +105,8 @@ $ sudo chown 1000:0 /data/projects
 ```
 #### Flux deployment via timoni
 You will need to update the file flux-aio.cue with the URL to your GIT repository.
-Download the timoni binary from https://github.com/stefanprodan/timoni/releases
+
+Get the latest timoni linux_amd64.tar.gz binary from here: https://github.com/stefanprodan/timoni/releases
 ```
 $ wget -qO- https://github.com/stefanprodan/timoni/releases/download/v0.16.0/timoni_0.16.0_linux_amd64.tar.gz | tar xvz
 $ sudo mv timoni /usr/local/bin/
@@ -147,7 +146,6 @@ With the DNS records in place you can access the different web services.
 - https://awx.home - AWX
 - https://weave.home - Weave-GitOps
 - https://k8s.home - Kubernetes
-- https://kubeclarity.home - kubeClarity
 #### Default users and passwords:
 - Weave-GitOps: admin/flux
 - AWX: admin/awxawx
@@ -160,6 +158,13 @@ $ sudo ln -s /usr/local/bin/flux /usr/bin/flux
 $ curl --silent --location "https://github.com/weaveworks/weave-gitops/releases/download/v0.24.0/gitops-$(uname)-$(uname -m).tar.gz" | tar xz -C /tmp
 $ sudo mv /tmp/gitops /usr/local/bin/
 $ sudo ln -s /usr/local/bin/gitops /usr/bin/gitops
+```
+## 5. \[Optional\] Install k9s.
+Get the latest releases for k9s_Linux_amd64.tar.gz here: https://github.com/derailed/k9s/releases
+```
+$ wget -qO- https://github.com/derailed/k9s/releases/download/v0.28.2/k9s_Linux_amd64.tar.gz | tar xvz
+$ sudo mv k9s /usr/local/bin/
+$ sudo ln -s /usr/local/bin/k9s /usr/bin/k9s
 ```
 ### Useful Flux CLI commands
 - Initiate a manual git sync for Flux.

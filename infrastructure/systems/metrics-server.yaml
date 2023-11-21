@@ -2,16 +2,16 @@
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
-  name: ingress-nginx
+  name: metrics-server
   namespace: infra-system
 spec:
   interval: 24h
-  url: https://kubernetes.github.io/ingress-nginx # https://helm.nginx.com/stable
+  url: https://kubernetes-sigs.github.io/metrics-server/
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
-  name: ingress-nginx
+  name: metrics-server
   namespace: infra-system
 spec:
   interval: 30m
@@ -21,10 +21,15 @@ spec:
       retries: -1 # always try to fix
   chart:
     spec:
-      chart: ingress-nginx
+      chart: metrics-server
       version: "*" # latest version
       sourceRef:
         kind: HelmRepository
-        name: ingress-nginx
+        name: metrics-server
         namespace: infra-system
       interval: 12h
+  values:
+    apiService.insecureSkipTLSVerify: true
+    args:
+      - --kubelet-insecure-tls
+      - --kubelet-preferred-address-types=InternalIP

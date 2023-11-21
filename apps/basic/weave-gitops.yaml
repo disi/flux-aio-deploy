@@ -1,10 +1,5 @@
 # access via port 9001
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: apps-system
----
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
